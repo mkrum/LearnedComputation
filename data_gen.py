@@ -22,13 +22,22 @@ def eval_expression(exp):
     return eval(''.join(exp))
 
 
-def print_infix_tree(root, exp):
+def _collapse_infix_tree(root, exp):
     if not root:
         return
 
-    print_infix_tree(root.left, exp)
+    _collapse_infix_tree(root.left, exp)
     exp.append(root.val)
-    print_infix_tree(root.right, exp)
+    _collapse_infix_tree(root.right, exp)
+
+
+def collapse_infix_tree(root):
+    if not root:
+        return []
+
+    exp = []
+    _collapse_infix_tree(root, exp)
+    return exp
 
 
 def get_random_num():
@@ -53,8 +62,9 @@ def fill_leaves_as_numbers(root):
     fill_leaves_as_numbers(root.right)
     
 
-def generate_random_infix_tree(operators, valid_nodes, nnodes):
+def generate_random_infix_tree(operators, nnodes):
     root = None
+    valid_nodes = []
     while operators and nnodes > 0:
         random_op = random.choice(operators)
         nnodes -= 1
@@ -86,10 +96,24 @@ def generate_random_infix_tree(operators, valid_nodes, nnodes):
     return root
 
 
+def generate_training_examples(num_examples, operators, num_operator_nodes):
+    x_train = []
+    y_train = []
+    for _ in range(num_examples):
+        infix_root = generate_random_infix_tree(operators, num_operator_nodes)
+        exp = collapse_infix_tree(infix_root)
+        result = eval_expression(exp)
+        split_exp = split_expression_into_tokens(exp)
+        x_train.append(split_exp)
+        y_train.append(result)
+    return x_train, y_train
+
+
 if __name__ == "__main__":
-    root = generate_random_infix_tree(['+', '*', '-', '/'], [], 5)
+    root = generate_random_infix_tree(['+', '*', '-', '/'], 5)
     exp = []
-    print_infix_tree(root, exp)
+    exp = collapse_infix_tree(root)
     print(exp)
     print(split_expression_into_tokens(exp))
     print(eval_expression(exp))
+    print(generate_training_examples(2, ['+', '*', '-', '/'], 5))
