@@ -41,22 +41,29 @@ class BasicModel(nn.Module):
         self.transformer = nn.Transformer(
             num_encoder_layers=6, num_decoder_layers=6, batch_first=True, d_model=128
         )
-        self.pe = positionalencoding1d(128, 1000).cuda()
+        self.pe = positionalencoding1d(128, 1000)
         self.to_dist = nn.Sequential(nn.Linear(128, MathToken.size()))
 
+    def _encode_position(self, data):
+
+        if self.pe.device != data.device:
+            self.pe = self.pe.to(data.device)
+
+        return data + self.pe[: data.shape[1]].unsqueeze(0)
+
     def forward(self, data, output):
-        mask = get_mask(data).cuda()
-        tgt_mask = get_mask(output).cuda()
 
-        embedded_data = self.embed(mask * data) + self.pe[: data.shape[1]].unsqueeze(0)
+        self.pe = self.pe.to(data.device)
 
-        embedded_tgt = self.embed(tgt_mask * output) + self.pe[
-            : output.shape[1]
-        ].unsqueeze(0)
+        mask = get_mask(data).to(data.device)
+        tgt_mask = get_mask(output).to(data.device)
+
+        embedded_data = self._encode_position(self.embed(mask * data))
+        embedded_tgt = self._encode_position(self.embed(tgt_mask * output))
 
         attn_mask = self.transformer.generate_square_subsequent_mask(
             output.shape[1]
-        ).cuda()
+        ).to(data.device)
 
         out = self.transformer(
             embedded_data,

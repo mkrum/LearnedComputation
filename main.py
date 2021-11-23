@@ -72,7 +72,7 @@ for epoch in range(5):
 
         losses.append(loss.item())
 
-        if i % 100 == 0 and i > 0:
+        if i % 20 == 0 and i > 0:
             print(f"({epoch} {i}/{N}) Loss: {np.mean(losses)}")
 
     acc = compute_accuracy(test_dl)
