@@ -182,9 +182,10 @@ class TupleEnum(ListEnum):
     def width(cls):
         return cls.token_type.size()
 
+
 class MathToken(EnumRep):
-    _tokens = list(map(str, range(10))) + ['+', '-', '<start>', '<stop>']
-    
+    _tokens = list(map(str, range(10))) + ["+", "-", "<start>", "<stop>"]
+
     _str_to_int = {t: i for (i, t) in enumerate(_tokens)}
     _int_to_str = {i: t for (t, i) in _str_to_int.items()}
 

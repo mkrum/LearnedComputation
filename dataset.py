@@ -1,7 +1,7 @@
-
 import random
 from torch.utils.data import DataLoader, Dataset
 from rep import ExpressionRep
+
 
 class Node:
     def __init__(self, val, is_num=False, left=None, right=None):
@@ -136,20 +136,21 @@ def fast_gen_no_tree(operators, num_operators):
 
     return split_expression_into_tokens(str_exp), str(eval_expression(str_exp))
 
-class SimpleExpressionDataset(Dataset):
 
+class SimpleExpressionDataset(Dataset):
     def __init__(self, N=int(1e6)):
-        self.x, self.y = fast_gen_no_tree_loop(N, ['+', '-'], 1)
+        self.x, self.y = fast_gen_no_tree_loop(N, ["+", "-"], 1)
 
     def __len__(self):
         return len(self.x)
 
     def __getitem__(self, idx):
         raw_x = self.x[idx]
-        raw_y = ['<start>'] + list(self.y[idx]) + ['<stop>']
+        raw_y = ["<start>"] + list(self.y[idx]) + ["<stop>"]
         x_tensor = ExpressionRep.from_str_list(raw_x).to_tensor()
         y_tensor = ExpressionRep.from_str_list(raw_y).to_tensor()
         return (x_tensor, y_tensor)
+
 
 if __name__ == "__main__":
     root = generate_random_infix_tree(["+", "*", "-", "/"], 5)
@@ -157,4 +158,3 @@ if __name__ == "__main__":
     exp = collapse_infix_tree(root)
     print(fast_gen_no_tree(["+"], 1))
     print(fast_gen_no_tree_loop(10, ["+"], 1))
-
