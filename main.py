@@ -10,6 +10,7 @@ from dataset import SimpleExpressionDataset, collate_fn
 from rich.progress import track
 from collections import deque
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def compute_accuracy(test_dl):
 
@@ -17,8 +18,8 @@ def compute_accuracy(test_dl):
     total = 0.0
 
     for (x, y) in track(test_dl):
-        x = x.cuda()
-        y = y.cuda()
+        x = x.to(device)
+        y = y.to(device)
         out = model(x, y)
 
         y = y[:, 1:].flatten()
@@ -36,7 +37,7 @@ test_dataset = SimpleExpressionDataset(N=int(1e4))
 test_dl = DataLoader(test_dataset, batch_size=256, shuffle=True, collate_fn=collate_fn)
 
 model = BasicModel()
-model.cuda()
+model.to(device)
 
 loss_fn = nn.CrossEntropyLoss()
 
@@ -54,8 +55,8 @@ for epoch in range(5):
 
     N = len(train_dl)
     for (i, (x, y)) in enumerate(train_dl):
-        x = x.cuda()
-        y = y.cuda()
+        x = x.to(device)
+        y = y.to(device)
         out = model(x, y)
 
         y = y[:, 1:].flatten()
