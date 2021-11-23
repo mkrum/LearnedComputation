@@ -1,6 +1,7 @@
 import random
 from torch.utils.data import DataLoader, Dataset
 from rep import ExpressionRep
+from torch.nn.utils.rnn import pad_sequence
 
 
 class Node:
@@ -150,6 +151,13 @@ class SimpleExpressionDataset(Dataset):
         x_tensor = ExpressionRep.from_str_list(raw_x).to_tensor()
         y_tensor = ExpressionRep.from_str_list(raw_y).to_tensor()
         return (x_tensor, y_tensor)
+
+
+def collate_fn(batch):
+    data, labels = zip(*batch)
+    padded_data = pad_sequence(data, batch_first=True, padding_value=-1)
+    padded_labels = pad_sequence(labels, batch_first=True, padding_value=-1)
+    return padded_data, padded_labels
 
 
 if __name__ == "__main__":
