@@ -1,7 +1,7 @@
 import math
 import torch
 import torch.nn as nn
-from rep import MathToken
+from rep import MathToken, BinaryOutputToken, BinaryOutputRep
 from torch.distributions import Categorical
 
 
@@ -35,14 +35,18 @@ def positionalencoding1d(d_model, length):
 
 
 class BasicModel(nn.Module):
-    def __init__(self):
+    def __init__(self, output_token, output_expression):
         super().__init__()
-        self.embed = nn.Embedding(MathToken.size(), 128)
+
+        self.output_token = output_token
+        self.output_expression = output_expression
+
+        self.embed = nn.Embedding(self.output_token.size(), 128)
         self.transformer = nn.Transformer(
             num_encoder_layers=6, num_decoder_layers=6, batch_first=True, d_model=128
         )
         self.pe = positionalencoding1d(128, 1000)
-        self.to_dist = nn.Sequential(nn.Linear(128, MathToken.size()))
+        self.to_dist = nn.Sequential(nn.Linear(128, self.output_token.size()))
 
     def _encode_position(self, data):
 
@@ -75,17 +79,56 @@ class BasicModel(nn.Module):
         return self.to_dist(out)
 
     def inference(self, test_string):
-        state = ExpressionRep.from_str_list(test_string).to_tensor().unsqueeze(0).cuda()
+        state = (
+            self.output_expression.from_str_list(test_string)
+            .to_tensor()
+            .unsqueeze(0)
+            .cuda()
+        )
         act = nn.LogSoftmax(dim=-1)
         tokens = ["<start>"]
 
         next_token = ""
         while next_token != "<stop>":
-            out = ExpressionRep.from_str_list(tokens).to_tensor().unsqueeze(0).cuda()
+            out = (
+                self.output_expression.from_str_list(tokens)
+                .to_tensor()
+                .unsqueeze(0)
+                .cuda()
+            )
             with torch.no_grad():
                 logits = model(state, out)[:, -1, :]
             dist = Categorical(logits=logits)
-            next_token = MathToken.from_int(dist.sample().cpu().item()).to_str()
+            next_token = self.output_token.from_int(dist.sample().cpu().item()).to_str()
             tokens.append(next_token)
 
         return "".join(tokens[1:-1])
+
+
+class BinarizedModel(BasicModel):
+    def __init__(self, output_token, output_expression):
+        super().__init__(output_token, output_expression)
+        self.embed_fc = nn.Linear(12, 128)
+
+    def forward(self, data, output):
+
+        self.pe = self.pe.to(data.device)
+
+        mask = get_mask(data).to(data.device)
+        tgt_mask = get_mask(output).to(data.device)
+
+        embedded_data = self._encode_position(self.embed_fc(mask * data))
+        embedded_tgt = self._encode_position(self.embed(tgt_mask * output))
+
+        attn_mask = self.transformer.generate_square_subsequent_mask(
+            output.shape[1]
+        ).to(data.device)
+
+        out = self.transformer(
+            embedded_data,
+            embedded_tgt,
+            src_key_padding_mask=~mask[:, :, 0].view(mask.shape[0], 3),
+            tgt_key_padding_mask=~tgt_mask,
+            tgt_mask=attn_mask,
+        )
+        return self.to_dist(out)

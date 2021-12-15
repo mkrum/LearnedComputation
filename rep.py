@@ -192,3 +192,14 @@ class MathToken(EnumRep):
 
 class ExpressionRep(ListEnum):
     token_type = MathToken
+
+
+class BinaryOutputToken(EnumRep):
+    _tokens = ["0", "1", "<start>", "<stop>"]
+
+    _str_to_int = {t: i for (i, t) in enumerate(_tokens)}
+    _int_to_str = {i: t for (t, i) in _str_to_int.items()}
+
+
+class BinaryOutputRep(ListEnum):
+    token_type = BinaryOutputToken
