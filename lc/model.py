@@ -1,7 +1,7 @@
 import math
 import torch
 import torch.nn as nn
-from rep import MathToken, BinaryOutputToken, BinaryOutputRep
+from lc.rep import MathToken, BinaryOutputToken, BinaryOutputRep
 from torch.distributions import Categorical
 
 

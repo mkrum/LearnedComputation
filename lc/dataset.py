@@ -3,7 +3,7 @@ import numpy as np
 
 import torch
 from torch.utils.data import DataLoader, Dataset
-from rep import ExpressionRep, BinaryOutputRep
+from lc.rep import ExpressionRep, BinaryOutputRep
 from torch.nn.functional import one_hot
 from torch.nn.utils.rnn import pad_sequence
 from bitstring import BitArray

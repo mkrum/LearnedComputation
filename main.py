@@ -5,11 +5,12 @@ from torch.utils.data import DataLoader
 from torch.distributions import Categorical
 import numpy as np
 
-from rep import ExpressionRep
-from model import BasicModel
-from dataset import MathDataset, TestMathDataset
 from rich.progress import track
 from collections import deque
+
+from lc.rep import ExpressionRep
+from lc.model import BasicModel
+from lc.dataset import MathDataset, TestMathDataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
