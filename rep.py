@@ -1,9 +1,17 @@
 import itertools
 from typing import List, Dict
 from dataclasses import dataclass, field
+from bitstring import BitArray
 
 import torch
 import numpy as np
+
+
+def split_expression_into_tokens(exp):
+    unpacked = []
+    for e in exp:
+        unpacked.extend(list(str(e)))
+    return unpacked
 
 
 class EnumRep:
@@ -193,6 +201,39 @@ class MathToken(EnumRep):
 class ExpressionRep(ListEnum):
     token_type = MathToken
 
+    @classmethod
+    def from_str_list(cls, str_val):
+        str_val = split_expression_into_tokens(str_val)
+        return super().from_str_list(str_val)
+
+    @classmethod
+    def from_str(cls, str_val):
+        str_val = ["<start>"] + list(str_val) + ["<stop>"]
+        return super().from_str_list(str_val)
+
+    def to_str(cls):
+        return "".join(map(lambda x: x.to_str(), cls._values))
+
+    @classmethod
+    def parse(cls, tokens):
+        stop_ind = -1
+        if tokens[0] != "<start>":
+            return None
+
+        tokens = tokens[1:]
+
+        if "<stop>" not in tokens:
+            return None
+
+        stop_ind = tokens.index("<stop>")
+        tokens = tokens[:stop_ind]
+
+        str_value = "".join(tokens)
+        try:
+            return int(str_value)
+        except ValueError:
+            return None
+
 
 class BinaryOutputToken(EnumRep):
     _tokens = ["0", "1", "<start>", "<stop>"]
@@ -203,3 +244,54 @@ class BinaryOutputToken(EnumRep):
 
 class BinaryOutputRep(ListEnum):
     token_type = BinaryOutputToken
+
+    @classmethod
+    def from_str(cls, str_val):
+        y_vals = list(BitArray(int=int(str_val), length=9).bin)
+        raw_y = ["<start>"] + y_vals + ["<stop>"]
+        return cls.from_str_list(raw_y)
+
+
+class BinaryVectorRep8bit:
+
+    symbols = ["+", "-"]
+    n_bits = 8
+
+    def __init__(self, vec):
+        self.vec = vec
+
+    @classmethod
+    def size(cls):
+        return cls.n_bits + len(cls.symbols)
+
+    @classmethod
+    def from_str(cls, val):
+        x = torch.zeros(cls.n_bits + len(cls.symbols))
+
+        if val in cls.symbols:
+            val_idx = cls.symbols.index(val)
+            x[cls.n_bits + val_idx] = 1.0
+            return x
+
+        try:
+            val = int(val)
+        except ValueError:
+            print(f"Invalid value? {val}")
+
+        vals = BitArray(int=val, length=cls.n_bits)
+
+        for (i, v) in enumerate(vals.bin):
+            x[i] = int(v)
+
+        return x
+
+    @classmethod
+    def from_str_list(cls, str_list):
+        vecs = []
+        for x in str_list:
+            vecs.append(cls.from_str(x))
+
+        return cls(torch.stack(vecs))
+
+    def to_tensor(self):
+        return self.vec

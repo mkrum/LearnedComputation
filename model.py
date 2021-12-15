@@ -35,10 +35,11 @@ def positionalencoding1d(d_model, length):
 
 
 class BasicModel(nn.Module):
-    def __init__(self, output_token, output_expression):
+    def __init__(self, input_expression, output_expression):
         super().__init__()
 
-        self.output_token = output_token
+        self.input_expression = input_expression
+        self.output_token = output_expression.token_type
         self.output_expression = output_expression
 
         self.embed = nn.Embedding(self.output_token.size(), 128)
@@ -78,37 +79,51 @@ class BasicModel(nn.Module):
         )
         return self.to_dist(out)
 
-    def inference(self, test_string):
-        state = (
-            self.output_expression.from_str_list(test_string)
-            .to_tensor()
-            .unsqueeze(0)
-            .cuda()
-        )
+    def inference(self, x, max_len=5):
         act = nn.LogSoftmax(dim=-1)
-        tokens = ["<start>"]
 
-        next_token = ""
-        while next_token != "<stop>":
-            out = (
-                self.output_expression.from_str_list(tokens)
-                .to_tensor()
-                .unsqueeze(0)
-                .cuda()
+        tokens = [["<start>"] for _ in range(x.shape[0])]
+
+        for _ in range(max_len):
+
+            out = torch.tensor(
+                [
+                    [
+                        self.output_token.from_str(tokens[j][i]).to_int()
+                        for i in range(len(tokens[j]))
+                    ]
+                    for j in range(x.shape[0])
+                ]
             )
+            out = out.cuda()
+
             with torch.no_grad():
-                logits = model(state, out)[:, -1, :]
+                logits = self.forward(x, out)[:, -1, :]
+
             dist = Categorical(logits=logits)
-            next_token = self.output_token.from_int(dist.sample().cpu().item()).to_str()
-            tokens.append(next_token)
+            preds = dist.sample().cpu()
+            next_tokens = [
+                self.output_token.from_int(preds[i].item()).to_str()
+                for i in range(x.shape[0])
+            ]
+            for (i, t) in enumerate(next_tokens):
+                tokens[i].append(t)
 
-        return "".join(tokens[1:-1])
+        out = []
+        for t in tokens:
+            out.append(self.output_expression.parse(t))
+
+        return out
 
 
-class BinarizedModel(BasicModel):
-    def __init__(self, output_token, output_expression):
-        super().__init__(output_token, output_expression)
-        self.embed_fc = nn.Linear(12, 128)
+class VectorInputModel(BasicModel):
+    def __init__(self, input_expression, output_expression):
+        super().__init__(input_expression, output_expression)
+        self.embed_fc = nn.Sequential(
+            nn.Linear(input_expression.size(), 32, bias=False),
+            nn.ReLU(),
+            nn.Linear(32, 128),
+        )
 
     def forward(self, data, output):
 

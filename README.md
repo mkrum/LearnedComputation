@@ -32,6 +32,15 @@ integer into a unique dense representation. These representations are then
 treated as parameters, meaning that the representation for the letter 'a' will
 start out random and become something that captures the semantics of 'a'.
 
+In practice, representations are almost never done at the character level.
+Learning the right level of abstraction is an active field of research in NLP,
+with most methods using some kind of cluster to try to find the most efficient
+tokens to split up text. There is a balance between width, the size of the
+dictinoary, and depth, the required number of tokens to specify some text.
+Increase the number of tokens will usually decrease the total number needed to
+express text, but at the cost of increasing the total number of tokens that need
+to be considered at any one time.
+
 To represent numbers, the paper takes a similar approach. They convert each
 number into a tokenized representation based on their raw symbols. For example,
 the number 256 will become
@@ -43,4 +52,7 @@ and `5` and `6`. It will treat like the raw symbols from the language case and
 have to learn how to map from `256` the symbol to `256` the concept. 
 
 For this project, we wanted to experiment with different ways we can represent
-numbers for deep learning models. 
+numbers for deep learning models. On its face, it seems very inefficient to
+represent numbers with their raw symbolic values. We already have dense
+representations that we can use for numbers from their underlying representation
+on the hardware. 
