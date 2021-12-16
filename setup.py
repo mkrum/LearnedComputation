@@ -4,5 +4,5 @@ import glob
 setup(
     name="lc",
     packages=["lc"],
-    install_requires=["torch", "rich", "bitstring", "maplotlib", "seaborn"],
+    install_requires=["torch", "rich", "bitstring", "matplotlib", "seaborn"],
 )
