@@ -100,8 +100,7 @@ class BasicModel(nn.Module):
             with torch.no_grad():
                 logits = self.forward(x, out)[:, -1, :]
 
-            dist = Categorical(logits=logits)
-            preds = dist.sample().cpu()
+            preds = torch.argmax(logits, -1)
             next_tokens = [
                 self.output_token.from_int(preds[i].item()).to_str()
                 for i in range(x.shape[0])
@@ -118,6 +117,7 @@ class BasicModel(nn.Module):
 
 class VectorInputModel(BasicModel):
     def __init__(self, input_expression, output_expression):
+
         super().__init__(input_expression, output_expression)
         self.embed_fc = nn.Sequential(
             nn.Linear(input_expression.size(), 32, bias=False),
@@ -132,17 +132,16 @@ class VectorInputModel(BasicModel):
         mask = get_mask(data).to(data.device)
         tgt_mask = get_mask(output).to(data.device)
 
-        embedded_data = self._encode_position(self.embed_fc(mask * data))
+        embedded_data = self._encode_position(self.embed_fc(data))
         embedded_tgt = self._encode_position(self.embed(tgt_mask * output))
 
         attn_mask = self.transformer.generate_square_subsequent_mask(
             output.shape[1]
         ).to(data.device)
-
         out = self.transformer(
             embedded_data,
             embedded_tgt,
-            src_key_padding_mask=~mask[:, :, 0].view(mask.shape[0], 3),
+            src_key_padding_mask=~mask[:, :, 0].view(mask.shape[0], mask.shape[1]),
             tgt_key_padding_mask=~tgt_mask,
             tgt_mask=attn_mask,
         )

@@ -1,4 +1,5 @@
 from collections import namedtuple
+import argparse
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -46,7 +47,7 @@ def acc_and_valid_plot(ax, base_timestamp, test_logs):
 
     ax.plot(timestamps, accs)
     ax.plot(timestamps, valids)
-    ax.set_ylim([0, 1])
+    ax.set_ylim([0, 100])
     ax.set_ylabel("Percentage")
     ax.legend(["Accuracy", "Validity"])
     ax.set_title("Success Metrics")
@@ -74,5 +75,9 @@ def training_plot(log_file):
 
 
 if __name__ == "__main__":
-    training_plot("example.log")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("log_file")
+
+    args = parser.parse_args()
+    training_plot(args.log_file)
     plt.show()

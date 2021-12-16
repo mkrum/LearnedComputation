@@ -1,4 +1,5 @@
 import logging
+import argparse
 from collections import deque
 
 import torch
@@ -8,8 +9,15 @@ from torch.utils.data import DataLoader
 from torch.distributions import Categorical
 import numpy as np
 
-from lc.rep import ExpressionRep
-from lc.model import BasicModel
+from lc.rep import (
+    BinaryOutputToken,
+    BinaryOutputRep,
+    MathToken,
+    ExpressionRep,
+    BinaryVectorRep8bit,
+    FloatRep,
+)
+from lc.model import BasicModel, VectorInputModel
 from lc.dataset import MathDataset, TestMathDataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -156,16 +164,25 @@ def train(
         acc = compute_accuracy(model, test_dl)
         print(f"({epoch}) Loss: {np.mean(losses)} Accuracy: {acc}")
         if epoch % 10 == 0:
-            torch.save(model.state_dict(), f"models_{epoch}.pth")
+            torch.save(model.state_dict(), f"model_{epoch}.pth")
+
+    torch.save(model.state_dict(), f"model_{epoch}.pth")
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("log_file")
+
+    args = parser.parse_args()
+
     logging.basicConfig(
         format="%(asctime)s%(message)s",
         datefmt="%s",
-        filename="example.log",
+        filename=args.log_file,
         encoding="utf-8",
         filemode="w",
         level=logging.DEBUG,
     )
+    # train(VectorInputModel, FloatRep, ExpressionRep)
     train(BasicModel, ExpressionRep, ExpressionRep)

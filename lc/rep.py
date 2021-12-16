@@ -281,7 +281,7 @@ class BinaryVectorRep8bit:
         vals = BitArray(int=val, length=cls.n_bits)
 
         for (i, v) in enumerate(vals.bin):
-            x[i] = int(v)
+            x[i] = float(v)
 
         return x
 
@@ -290,7 +290,86 @@ class BinaryVectorRep8bit:
         vecs = []
         for x in str_list:
             vecs.append(cls.from_str(x))
+        return cls(torch.stack(vecs))
 
+    def to_tensor(self):
+        return self.vec
+
+
+class FloatRep:
+
+    symbols = ["+", "-"]
+    n_bits = 1
+
+    def __init__(self, vec):
+        self.vec = vec
+
+    @classmethod
+    def size(cls):
+        return cls.n_bits + len(cls.symbols)
+
+    @classmethod
+    def from_str(cls, val):
+        x = torch.zeros(cls.n_bits + len(cls.symbols))
+
+        if val in cls.symbols:
+            val_idx = cls.symbols.index(val)
+            x[cls.n_bits + val_idx] = 1.0
+            return x
+
+        try:
+            val = float(val)
+        except ValueError:
+            print(f"Invalid value? {val}")
+
+        x[0] = float(val)
+        return x
+
+    @classmethod
+    def from_str_list(cls, str_list):
+        vecs = []
+        for x in str_list:
+            vecs.append(cls.from_str(x))
+        return cls(torch.stack(vecs))
+
+    def to_tensor(self):
+        return self.vec
+
+
+class SplitRep:
+
+    symbols = ["+", "-"]
+    n_bits = 1
+
+    def __init__(self, vec):
+        self.vec = vec
+
+    @classmethod
+    def size(cls):
+        return cls.n_bits + len(cls.symbols)
+
+    @classmethod
+    def from_str(cls, val):
+        x = torch.zeros(cls.n_bits + len(cls.symbols))
+
+        if val in cls.symbols:
+            val_idx = cls.symbols.index(val)
+            x[cls.n_bits + val_idx] = 1.0
+            return x
+
+        try:
+            val = float(val)
+        except ValueError:
+            print(f"Invalid value? {val}")
+
+        x[0] = float(val)
+        return x
+
+    @classmethod
+    def from_str_list(cls, str_list):
+        vecs = []
+        for x in str_list:
+            vecs.append(cls.from_str(x))
         return cls(torch.stack(vecs))
 
     def to_tensor(self):
