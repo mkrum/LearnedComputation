@@ -1,12 +1,12 @@
+import logging
+from collections import deque
+
 import torch
 import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.distributions import Categorical
 import numpy as np
-
-from rich.progress import track
-from collections import deque
 
 from lc.rep import ExpressionRep
 from lc.model import BasicModel
@@ -78,9 +78,10 @@ def compute_accuracy(model, test_dl):
 
         total += x.shape[0]
 
-    print(error / valid)
-    print(valid / total)
-    print(correct / total)
+    mse = error / valid
+    valid_per = valid / total
+    accuracy = correct / total
+    logging.info(f",test,{mse},{valid_per},{accuracy}")
     return correct / total
 
 
@@ -89,8 +90,8 @@ def train(
     input_expression,
     output_expression,
     lr=1e-4,
-    num_range=(0, 127),
-    batch_size=256,
+    num_range=(-128, 127),
+    batch_size=512,
     train_examples=int(1e5),
 ):
 
@@ -102,7 +103,7 @@ def train(
     )
     test_dl = DataLoader(
         test_dataset,
-        batch_size=256,
+        batch_size=batch_size,
         shuffle=True,
         collate_fn=TestMathDataset.collate_fn,
     )
@@ -115,9 +116,7 @@ def train(
     opt = Adam(model.parameters(), lr=lr)
 
     acc = compute_accuracy(model, test_dl)
-    print(acc)
-
-    for epoch in range(20):
+    for epoch in range(100):
 
         dataset = MathDataset(
             input_expression, output_expression, N=train_examples, num_range=num_range
@@ -149,13 +148,24 @@ def train(
             opt.step()
 
             losses.append(loss.item())
+            logging.info(f",train,{epoch},{i},{loss.item()}")
 
             if i % 20 == 0 and i > 0:
                 print(f"({epoch} {i}/{N}) Loss: {np.mean(losses)}")
 
         acc = compute_accuracy(model, test_dl)
         print(f"({epoch}) Loss: {np.mean(losses)} Accuracy: {acc}")
+        if epoch % 10 == 0:
+            torch.save(model.state_dict(), f"models_{epoch}.pth")
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        format="%(asctime)s%(message)s",
+        datefmt="%s",
+        filename="example.log",
+        encoding="utf-8",
+        filemode="w",
+        level=logging.DEBUG,
+    )
     train(BasicModel, ExpressionRep, ExpressionRep)
