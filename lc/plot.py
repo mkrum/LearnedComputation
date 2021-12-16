@@ -62,11 +62,11 @@ def mse_plot(ax, base_timestamp, test_logs):
     ax.set_ylabel("MSE")
 
 
-def training_plot(log_file):
+def training_plot(log_file, figsize=(5, 15)):
     train_logs, test_logs = load_data(log_file)
     base_timestamp = test_logs[0].timestamp
 
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(3, 9))
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=figsize)
 
     loss_plot(ax1, base_timestamp, train_logs)
     acc_and_valid_plot(ax2, base_timestamp, test_logs)
