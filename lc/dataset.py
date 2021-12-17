@@ -165,6 +165,23 @@ class TestMathDataset(MathDataset):
         padded_labels = pad_sequence(labels, batch_first=True, padding_value=-1)
         return padded_data, padded_labels, raw_data, raw_labels
 
+class FullTestMathDataset(MathDataset):
+
+    def __init__(self, input_rep, output_rep, N=int(1e6), num_range=(-128, 127)):
+        ops = ["+", "-"]
+        self.x = []
+        self.y = []
+        for o in ops:
+            for i in range(num_range[0], num_range[1] + 1):
+                for j in range(num_range[0], num_range[1] + 1):
+                    self.x.append([str(i), o, str(j)])
+                    if o == "+":
+                        self.y.append(str(i + j))
+                    elif o == "-":
+                        self.y.append(str(i - j))
+
+        self.input_rep = input_rep
+        self.output_rep = output_rep
 
 if __name__ == "__main__":
     root = generate_random_infix_tree(["+", "*", "-", "/"], 5)
