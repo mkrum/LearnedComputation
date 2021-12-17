@@ -6,7 +6,10 @@ from torch.distributions import Categorical
 
 
 def get_mask(data):
-    return data != -1
+    mask = (data != -1)
+    if len(mask.shape) == 3:
+        mask = mask[:, :, 0]
+    return mask
 
 
 def positionalencoding1d(d_model, length):
@@ -47,7 +50,12 @@ class BasicModel(nn.Module):
             num_encoder_layers=6, num_decoder_layers=6, batch_first=True, d_model=128
         )
         self.pe = positionalencoding1d(128, 1000)
-        self.to_dist = nn.Sequential(nn.Linear(128, self.output_token.size()))
+        self.to_dist = nn.Linear(128, self.output_token.size())
+
+        if hasattr(input_expression, "size"):
+            self.embed_init = nn.Embedding(input_expression.size(), 128)
+            self.embed_fc = nn.Linear(input_expression.size(), 128, bias=False)
+            self.embed_fc.weight = nn.Parameter(self.embed_init.weight.T)
 
     def _encode_position(self, data):
 
@@ -57,7 +65,6 @@ class BasicModel(nn.Module):
         return data + self.pe[: data.shape[1]].unsqueeze(0)
 
     def forward(self, data, output):
-
         self.pe = self.pe.to(data.device)
 
         mask = get_mask(data).to(data.device)
@@ -116,17 +123,8 @@ class BasicModel(nn.Module):
 
 
 class VectorInputModel(BasicModel):
-    def __init__(self, input_expression, output_expression):
-
-        super().__init__(input_expression, output_expression)
-        self.embed_fc = nn.Sequential(
-            nn.Linear(input_expression.size(), 32, bias=False),
-            nn.ReLU(),
-            nn.Linear(32, 128),
-        )
 
     def forward(self, data, output):
-
         self.pe = self.pe.to(data.device)
 
         mask = get_mask(data).to(data.device)
@@ -138,10 +136,11 @@ class VectorInputModel(BasicModel):
         attn_mask = self.transformer.generate_square_subsequent_mask(
             output.shape[1]
         ).to(data.device)
+
         out = self.transformer(
             embedded_data,
             embedded_tgt,
-            src_key_padding_mask=~mask[:, :, 0].view(mask.shape[0], mask.shape[1]),
+            src_key_padding_mask=~mask,
             tgt_key_padding_mask=~tgt_mask,
             tgt_mask=attn_mask,
         )

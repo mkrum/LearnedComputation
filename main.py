@@ -14,6 +14,7 @@ from lc.rep import (
     BinaryOutputRep,
     MathToken,
     ExpressionRep,
+    ExpressionRepOneHot,
     BinaryVectorRep8bit,
     FloatRep,
 )
@@ -21,7 +22,6 @@ from lc.model import BasicModel, VectorInputModel
 from lc.dataset import MathDataset, TestMathDataset
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 def get_pred(test_string, model):
 
@@ -81,8 +81,8 @@ def compute_accuracy(model, test_dl):
                 valid += 1
                 error += (o - t) ** 2
 
-            if o == t:
-                correct += 1
+                if int(o) == int(t):
+                    correct += 1
 
         total += x.shape[0]
 
@@ -164,9 +164,9 @@ def train(
         acc = compute_accuracy(model, test_dl)
         print(f"({epoch}) Loss: {np.mean(losses)} Accuracy: {acc}")
         if epoch % 10 == 0:
-            torch.save(model.state_dict(), f"model_{epoch}.pth")
+            torch.save(model.state_dict(), f"float_model_{epoch}.pth")
 
-    torch.save(model.state_dict(), f"model_{epoch}.pth")
+    torch.save(model.state_dict(), f"float_model_{epoch}.pth")
 
 
 if __name__ == "__main__":
@@ -184,5 +184,5 @@ if __name__ == "__main__":
         filemode="w",
         level=logging.DEBUG,
     )
-    # train(VectorInputModel, FloatRep, ExpressionRep)
-    train(BasicModel, ExpressionRep, ExpressionRep)
+    #train(BasicModel, ExpressionRep, ExpressionRep, num_range=(-127 ,128))
+    train(VectorInputModel, BinaryVectorRep8bit, ExpressionRep, num_range=(-128, 127))

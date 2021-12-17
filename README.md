@@ -1,5 +1,10 @@
 # LearnedComputation
 
+# TODO
+1. Log training data
+1. train up some models
+
+# Intro
 Transfomers are a neural network architecture that has reached state of the art
 across many tasks. Initially used for natural language processing, these models
 have slowly bled into the surrounding fields: from reinforcement learning to

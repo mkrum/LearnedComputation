@@ -79,5 +79,5 @@ if __name__ == "__main__":
     parser.add_argument("log_file")
 
     args = parser.parse_args()
-    training_plot(args.log_file)
+    training_plot(args.log_file, figsize=(3,9))
     plt.show()

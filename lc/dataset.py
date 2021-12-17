@@ -127,7 +127,7 @@ def fast_gen_no_tree(operators, num_operators, number_range):
 
 
 class MathDataset(Dataset):
-    def __init__(self, input_rep, output_rep, N=int(1e6), num_range=(-10000, 10000)):
+    def __init__(self, input_rep, output_rep, N=int(1e6), num_range=(-128, 127)):
         self.x, self.y = fast_gen_no_tree_loop(N, ["+", "-"], 1, num_range)
         self.input_rep = input_rep
         self.output_rep = output_rep

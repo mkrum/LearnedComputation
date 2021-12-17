@@ -234,6 +234,21 @@ class ExpressionRep(ListEnum):
         except ValueError:
             return None
 
+class ExpressionRepOneHot(ExpressionRep):
+
+    @classmethod
+    def size(self):
+        return 14
+
+    def to_tensor(self):
+        tensor = super().to_tensor()
+        out = torch.nn.functional.one_hot(tensor, num_classes=14)
+        return out.float()
+    
+    @classmethod
+    def from_expression_tensor(cls, output):
+        out = torch.nn.functional.one_hot(output, num_classes=14)
+        return out.float()
 
 class BinaryOutputToken(EnumRep):
     _tokens = ["0", "1", "<start>", "<stop>"]
@@ -254,7 +269,7 @@ class BinaryOutputRep(ListEnum):
 
 class BinaryVectorRep8bit:
 
-    symbols = ["+", "-"]
+    symbols = ["+", "-", "<start>", "<stop>"]
     n_bits = 8
 
     def __init__(self, vec):
@@ -328,49 +343,14 @@ class FloatRep:
     @classmethod
     def from_str_list(cls, str_list):
         vecs = []
-        for x in str_list:
+        for x in split_expression_into_tokens(str_list):
             vecs.append(cls.from_str(x))
         return cls(torch.stack(vecs))
 
     def to_tensor(self):
         return self.vec
 
-
-class SplitRep:
-
-    symbols = ["+", "-"]
-    n_bits = 1
-
-    def __init__(self, vec):
-        self.vec = vec
-
     @classmethod
-    def size(cls):
-        return cls.n_bits + len(cls.symbols)
-
-    @classmethod
-    def from_str(cls, val):
-        x = torch.zeros(cls.n_bits + len(cls.symbols))
-
-        if val in cls.symbols:
-            val_idx = cls.symbols.index(val)
-            x[cls.n_bits + val_idx] = 1.0
-            return x
-
-        try:
-            val = float(val)
-        except ValueError:
-            print(f"Invalid value? {val}")
-
-        x[0] = float(val)
-        return x
-
-    @classmethod
-    def from_str_list(cls, str_list):
-        vecs = []
-        for x in str_list:
-            vecs.append(cls.from_str(x))
-        return cls(torch.stack(vecs))
-
-    def to_tensor(self):
-        return self.vec
+    def from_expression_tensor(cls, output):
+        out = torch.nn.functional.one_hot(output, num_classes=14)
+        return out.float()
