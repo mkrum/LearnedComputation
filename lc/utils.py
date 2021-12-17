@@ -10,7 +10,8 @@ def load_model(model_weights_path, input_rep, output_rep):
     model_type = BasicModel
     if input_rep in [FloatRep, BinaryVectorRep8bit]:
         model_type = VectorInputModel
-
+    
+    print(model_type)
     model = model_type(input_rep, output_rep)
 
     model.load_state_dict(torch.load(model_weights_path))
