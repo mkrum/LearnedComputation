@@ -11,7 +11,7 @@ def load_model(model_weights_path, input_rep, output_rep):
     if input_rep in [FloatRep, BinaryVectorRep8bit]:
         model_type = VectorInputModel
 
-    model = BasicModel(input_rep, output_rep)
+    model = model_type(input_rep, output_rep)
 
     model.load_state_dict(torch.load(model_weights_path))
     model = model.to(device)
