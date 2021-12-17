@@ -45,7 +45,7 @@ def plot_errors(info):
 
         ax.scatter(int(x_raw[0]), int(x_raw[2]), color='red')
 
-    for (x_raw, y_raw) in info['wrong']:
+    for (x_raw, y_raw) in info['invalid']:
         if x_raw[1] == '-':
             ax = ax1
         else:
