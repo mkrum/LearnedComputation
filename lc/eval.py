@@ -14,8 +14,7 @@ def get_errors(model, input_rep, output_rep, batch_size=256, num_range=(-128, 12
     dataset = FullTestMathDataset(input_rep, output_rep, num_range=(-128, 127))
     dataloader = DataLoader(dataset, batch_size=batch_size, collate_fn=FullTestMathDataset.collate_fn, drop_last=False)
     
-    info = {'wrong': [], 'invalid': []}
-    total = len(dataset)
+    info = {'wrong': [], 'invalid': [], "total": len(dataset)}
     for (x, y, x_raw, y_raw) in tqdm.tqdm(dataloader):
         x = x.cuda()
         output = model.inference(x)
