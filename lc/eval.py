@@ -34,6 +34,12 @@ def plot_errors(info):
 
     ax1.set_title("Subtraction")
     ax2.set_title("Addition")
+    
+    ax1.set_xlabel("First Operand")
+    ax1.set_ylabel("Second Operand")
+    
+    ax2.set_xlabel("First Operand")
+    ax2.set_ylabel("Second Operand")
 
     for (x_raw, y_raw, output) in info['wrong']:
 
